@@ -137,7 +137,7 @@ const connectDB = async () => {
   if (mongoose.connection.readyState === 0) {
     try {
       await mongoose.connect(
-        "mongodb+srv://sauravbedwal1234:LAxU7xXSS9gO09WJ@namastenodesauravbedwal.vwabz.mongodb.net/broomees",
+        process.env.MONGO_URI, // Use environment variable for MongoDB URI
         { useNewUrlParser: true, useUnifiedTopology: true }
       );
       console.log("Database connected");
@@ -202,6 +202,9 @@ const User = mongoose.model("User", userSchema);
 // Routes
 app.post("/api/signup", async (req, res) => {
   try {
+    // Connect to the database
+    await connectDB();
+
     const { firstName, lastName, email, userName, password } = req.body;
 
     if (!firstName || !lastName || !email || !userName || !password) {
@@ -215,7 +218,7 @@ app.post("/api/signup", async (req, res) => {
 
     const user = new User({ firstName, lastName, email, userName, password });
     await user.save();
-    res.json({ message: "User added successfully" });
+    res.status(201).json({ message: "User added successfully" }); // Use 201 for created resources
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ message: "Something went wrong: " + err.message });
@@ -224,15 +227,18 @@ app.post("/api/signup", async (req, res) => {
 
 app.get("/api/user", async (req, res) => {
   try {
+    // Connect to the database
+    await connectDB();
+
     const users = await User.find({});
     if (users.length === 0) {
-      res.status(404).send("No User found");
+      res.status(404).json({ message: "No users found" });
     } else {
-      res.send(users);
+      res.status(200).json(users);
     }
   } catch (err) {
     console.error(err.message);
-    res.status(400).send("Something went wrong: " + err.message);
+    res.status(500).json({ message: "Something went wrong: " + err.message });
   }
 });
 
